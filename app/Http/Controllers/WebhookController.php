@@ -15,12 +15,10 @@ use Throwable;
 
 class WebhookController extends Controller
 {
-
     public function __construct(
-        private ResponseFactory $responseFactory,
-        private WebhookHandlerFactory $factory
-    )
-    {
+        private readonly ResponseFactory $responseFactory,
+        private readonly WebhookHandlerFactory $factory
+    ) {
     }
 
     public function handle(Request $request): Response
@@ -39,22 +37,34 @@ class WebhookController extends Controller
                 $handler->integrationType(),
                 $request
             ));
+
             Log::info('Webhook handled successfully', [
                 'integration' => $handler->integrationType()->name,
             ]);
 
+            return $this->responseFactory->noContent();
         } catch (WebhookVerificationException $e) {
-            Log::warning('Webhook not handled: ' . $e->getMessage(), ['request' => $request]);
+            Log::warning('Webhook not handled', [
+                'message' => $e->getMessage(),
+                'request' => $request->all(),
+            ]);
+
+            return $this->responseFactory->noContent();
         } catch (WebhookProcessingException $e) {
-            Log::error('Webhook processing failed: ' . $e->getMessage(), ['request' => $request]);
+            Log::error('Webhook processing failed', [
+                'message' => $e->getMessage(),
+                'request' => $request->all(),
+            ]);
+
+            return $this->responseFactory->noContent();
         } catch (Throwable $e) {
-            Log::critical('Unexpected error in webhook handler: ' . $e->getMessage(), ['exception' => $e]);
-            Log::error('Unexpected error in webhook handler: ', [
+            Log::critical('Unexpected error in webhook handler', [
                 'integration' => $handler->integrationType()->name,
                 'message' => $e->getMessage(),
+                'exception' => $e,
             ]);
-            // Optionally rethrow or handle as needed
-        } finally {
+
+            // Consider returning a different status code for unexpected errors
             return $this->responseFactory->noContent();
         }
     }

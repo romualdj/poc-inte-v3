@@ -8,9 +8,25 @@ use Illuminate\Http\Request;
 
 interface WebhookHandlerInterface
 {
+    /**
+     * Get the webhook handler.
+     *
+     * @return CoreWebhookHandler
+     */
     public function handler(): CoreWebhookHandler;
 
-    public function canHandleTicketingTool(Request $request): bool;
+    /**
+     * Determine if this handler can handle the webhook request.
+     *
+     * @param Request $request
+     * @return bool
+     */
+    public function canHandleWebhook(Request $request): bool;
 
+    /**
+     * Get the integration type.
+     *
+     * @return IntegrationType
+     */
     public function integrationType(): IntegrationType;
 }
