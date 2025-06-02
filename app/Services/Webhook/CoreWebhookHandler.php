@@ -7,18 +7,16 @@ use App\Contracts\Webhook\WebhookVerifierInterface;
 use App\Exceptions\WebhookProcessingException;
 use App\Exceptions\WebhookVerificationException;
 use App\Services\ValueObject\Payload;
-use App\Services\Webhook\Zendesk\TicketHandlerVerifier;
+use App\Contracts\Webhook\WebhookContentVerifierInterface;
 
 class CoreWebhookHandler
 {
-
     public function __construct(
-        protected WebhookRemoteStore        $webhookStore,
-        protected TicketHandlerVerifier     $handlerVerifier,
-        protected WebhookVerifierInterface  $webhookVerifier,
-        protected WebhookProcessorInterface $webhookProcessor
-    )
-    {
+        protected readonly WebhookRemoteStore $webhookStore,
+        protected readonly WebhookContentVerifierInterface $contentVerifier,
+        protected readonly WebhookVerifierInterface $webhookVerifier,
+        protected readonly WebhookProcessorInterface $webhookProcessor
+    ) {
     }
 
     /**
@@ -33,17 +31,17 @@ class CoreWebhookHandler
             throw new WebhookVerificationException('Webhook verification failed');
         }
 
-        if (!$this->canHandleTicket($payload)) {
-            throw new WebhookVerificationException('Ticket handler verification failed');
+        if (!$this->canHandleContent($payload)) {
+            throw new WebhookVerificationException('Content verification failed');
         }
 
         $this->webhookStore->handle($payload->request());
         $this->webhookProcessor->process($payload->request()->all());
     }
 
-    public function canHandleTicket(Payload $payload): bool
+    public function canHandleContent(Payload $payload): bool
     {
-        return $this->handlerVerifier->canHandle($payload->request());
+        return $this->contentVerifier->canHandle($payload->request());
     }
 
     protected function verifyRequest(Payload $payload): bool

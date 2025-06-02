@@ -12,7 +12,7 @@ class WebhookHandlerFactory
     /**
      * @var Collection<WebhookHandlerInterface>
      */
-    private Collection $handlers;
+    private readonly Collection $handlers;
 
     /**
      * @param WebhookHandlerInterface[] $handlers
@@ -22,10 +22,16 @@ class WebhookHandlerFactory
         $this->handlers = collect($handlers);
     }
 
+    /**
+     * Get the first handler that can handle the request.
+     *
+     * @param Request $request
+     * @return WebhookHandlerInterface|null
+     */
     public function getHandler(Request $request): ?WebhookHandlerInterface
     {
         return $this->handlers->first(
-            fn (WebhookHandlerInterface $handler) => $handler->canHandleTicketingTool($request)
+            fn (WebhookHandlerInterface $handler) => $handler->canHandleWebhook($request)
         );
     }
 }
